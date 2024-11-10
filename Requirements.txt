@@ -5,7 +5,7 @@ pip install matplotlib
 pip install numpy
 pip install google-auth google-auth-oauthlib 
 pip install google-auth-httplib2 
-pip install google-api-python-client 
+python -m pip install --upgrade google-api-python-client 
 pip install streamlit 
 pip install pandas
 pip install datetime 

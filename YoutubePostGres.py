@@ -8,8 +8,9 @@ import os
 # Set up YouTube API client
 API_KEY = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
 youtube = build('youtube', 'v3', developerKey=API_KEY)
-
+st.markdown("<h1 style='color:skyblue;'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
 video_url = st.text_input("Enter your Youtube url here") #  
+st.markdown(" ### Enter your Youtube url in the above input box to get detailed information about the youtube channel")
 #api_key = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
 
 
@@ -296,7 +297,7 @@ st.title("YouTube Video Details Fetcher")
 
 #video_id = st.text_input("Enter YouTube Video ID:")
 
-if st.button("Fetch Video Details"):
+if st.sidebar.button("Save in database") and len(video_url) > 0 :
     if video_id and channel_id:
         create_table()
         details = get_video_details(video_id)
@@ -329,3 +330,50 @@ if st.button("Fetch Video Details"):
         st.success("Video details fetched and saved to the database!")
     else:
         st.error("Please enter a valid video ID.")
+
+# Function to get video IDs from a channel
+def get_channel_videos(API_KEY, channel_id):
+    youtube = build('youtube', 'v3', developerKey=API_KEY)
+    request = youtube.search().list(
+        part="id",
+        channelId=channel_id,
+        maxResults=20,  # Limiting to 10 videos for demo; adjust as needed
+        type="video"
+    )
+    response = request.execute()
+
+    video_ids = [item['id']['videoId'] for item in response.get('items', [])]
+    return video_ids
+        
+
+# Fetch and display comments when button is clicked
+
+if st.sidebar.button("Get Channel Comments") :
+    if len(video_url) == 0 :
+       st.sidebar.write('Please input the url and try again')
+    elif API_KEY and channel_id:
+        try:
+            st.write("Fetching video IDs from channel...")
+            video_ids = get_channel_videos(API_KEY, channel_id)
+            all_comments = []
+
+            for video_id in video_ids:
+                st.write(f"Fetching comments for Video ID: {video_id}")
+                comments = get_video_comments(API_KEY, video_id)
+                all_comments.extend(comments)
+
+            if all_comments:
+                st.subheader("Channel Comments")
+                for comment in all_comments:
+                    st.write(f"**Comment ID**: {comment['Comment ID']}")
+                    st.write(f"**Video ID**: {comment['Video ID']}")
+                    st.write(f"**Comment Text**: {comment['Comment Text']}")
+                    st.write(f"**Comment Author**: {comment['Comment Author']}")
+                    st.write(f"**Comment Published Date**: {comment['Comment Published Date']}")
+                    st.write("---")
+            else:
+                st.error("No comments found.")
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
+    else:
+        st.warning("Please provide both API Key and Channel ID.")

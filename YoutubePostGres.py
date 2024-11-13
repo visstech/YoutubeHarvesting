@@ -4,11 +4,57 @@ import psycopg2
 from psycopg2 import sql
 from datetime import datetime
 import os
+import pandas as pd 
+from streamlit_custom_notification_box import custom_notification_box as scnb
+from sqlalchemy import create_engine
+
+#ackground Image
+#st.markdown(
+#    """
+#    <style>
+#    .stApp {
+#        background-image: url('https://static8.depositphotos.com/1000152/1020/i/450/depositphotos_10200176-stock-photo-beach-and-tropical-sea.jpg');
+#        background-size: cover;
+#        background-position: center;
+#        opacity: 0.9;
+#    }
+#    </style>
+#    """,
+#    unsafe_allow_html=True
+#)
+
+# Define the background color CSS
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #d6eaf8; /* Choose any color code */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Set sidebar background image
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background-image: url("https://images.pexels.com/photos/381739/pexels-photo-381739.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1");
+        background-size: cover;
+        background-position: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 
 # Set up YouTube API client
+
 API_KEY = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
 youtube = build('youtube', 'v3', developerKey=API_KEY)
-st.markdown("<h1 style='color:skyblue;'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
 video_url = st.text_input("Enter your Youtube url here") #  
 st.markdown(" ### Enter your Youtube url in the above input box to get detailed information about the youtube channel")
 #api_key = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
@@ -62,7 +108,8 @@ def get_channel_details(API_KEY, channel_id):
             "Channel Type": channel_info['kind'],  # General type of resource (usually 'youtube#channel')
             "Channel Views": channel_info['statistics']['viewCount'],
             "Channel Description": channel_info['snippet']['description'],
-            "Channel Status": channel_info['status']['privacyStatus']
+            "Channel Status": channel_info['status']['privacyStatus'],
+             "Channel video id":video_id #newly added.
         }
         return channel_data
     else:
@@ -105,8 +152,8 @@ def get_video_comments(API_KEY, video_id):
     # Request to get comments
     request = youtube.commentThreads().list(
         part="snippet",
-        videoId=video_id,
-        maxResults=10  # Limiting to 10 comments per video for demo; adjust as needed
+        videoId=video_id 
+        #maxResults=100  # Limiting to 10 comments per video for demo; adjust as needed
     )
     response = request.execute()
 
@@ -142,7 +189,7 @@ def create_table():
     conn = connect_to_db()
     cursor = conn.cursor()
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS youtube_videos (
+        CREATE TABLE IF NOT EXISTS video(
             video_id VARCHAR(50) PRIMARY KEY,
             playlist_id VARCHAR(50),
             title TEXT,
@@ -167,7 +214,8 @@ def create_table():
             channel_type  VARCHAR(255),
             channel_views  BIGINT,
             channel_description TEXT,            
-            channel_status VARCHAR(255)
+            channel_status VARCHAR(255),
+            channel_video_id VARCHAR(255)
         )
     ''')
     cursor.execute('''
@@ -223,7 +271,7 @@ def insert_video_details(details):
     conn = connect_to_db()
     cursor = conn.cursor()
     insert_query = '''
-        INSERT INTO youtube_videos (
+        INSERT INTO video (
             video_id, playlist_id, title, description, published_date, view_count, 
             like_count, dislike_count, favorite_count, comment_count, 
             duration, thumbnail_url, caption_status
@@ -244,9 +292,9 @@ def insert_channel_details(channel_details):
     cursor = conn.cursor()
     insert_query = '''
         INSERT INTO Channel (
-            channel_id, channel_name, channel_type, channel_views, channel_description, channel_status
+            channel_id, channel_name, channel_type, channel_views, channel_description, channel_status,channel_video_id
         ) VALUES (
-            %(Channel ID)s, %(Channel Name)s, %(Channel Type)s, %(Channel Views)s, %(Channel Description)s, %(Channel Status)s
+            %(Channel ID)s, %(Channel Name)s, %(Channel Type)s, %(Channel Views)s, %(Channel Description)s, %(Channel Status)s, %(Channel video id)s
         ) ON CONFLICT (channel_id) DO NOTHING
     '''
     cursor.execute(insert_query, channel_details)
@@ -290,15 +338,64 @@ def insert_comments_details(comments_details):
     cursor.close()
     conn.close()
 
+def AlertBox(wht_msg):
+    styles = {'material-icons':{'color': '#FF0000'},
+            'text-icon-link-close-container': {'box-shadow': '#3896de 0px 4px'},
+            'notification-text': {'':''},
+            'close-button':{'':''},
+            'link':{'':''}}
+
+    scnb(icon='info', 
+        textDisplay=wht_msg, 
+        externalLink='', 
+        url='#', 
+        styles=styles, 
+        key="foo")
+
+# Function to connect to PostgreSQL and fetch data
+def get_data():
+    # Connect to the PostgreSQL database
+    engine = onn = create_engine(f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}') #connect_to_db()
+    #create_engine(f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
+    
+    # Query to fetch data
+    query = ''' select channel_name,channel_video_id,COUNT(COMMENT_ID) from channel n,comments c
+              where n.channel_video_id = c.video_id
+              group by channel_name,channel_video_id ''' # Replace 'your_table_name' with the actual table name
+    
+    # Fetch data into a DataFrame
+    data = pd.read_sql(query, engine)
+    return data
+
+
 
 
 # Streamlit UI
-st.title("YouTube Video Details Fetcher")
+st.title("YouTube Video Details")
+
+
+st.markdown("""
+    <style>
+    .stButton > button {
+        color: white;
+        background-color: #6200EE;
+        font-size: 18px;
+        padding: 8px 20px;
+        border-radius: 10px;
+        transition: background-color 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #3700B3;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 #video_id = st.text_input("Enter YouTube Video ID:")
 
-if st.sidebar.button("Save in database") and len(video_url) > 0 :
-    if video_id and channel_id:
+if st.sidebar.button("Save in database") : #and len(video_url) > 0 :
+    if len(video_url) == 0 :
+        st.warning("Please enter URL to get youtube vido deatils to store in the database")
+    elif video_id and channel_id:
         create_table()
         details = get_video_details(video_id)
         channel_id,video_id = get_channel_id(API_KEY, video_url)
@@ -327,9 +424,10 @@ if st.sidebar.button("Save in database") and len(video_url) > 0 :
         st.image(details["thumbnail_url"])
         st.write("**Caption Status:**", "Available" if details["caption_status"] else "Not Available")
         
-        st.success("Video details fetched and saved to the database!")
+        #st.success("Video details fetched and saved to the database!")
+        AlertBox("Video details fetched and saved to the database!")
     else:
-        st.error("Please enter a valid video ID.")
+        st.error("Please enter a valid URL.")
 
 # Function to get video IDs from a channel
 def get_channel_videos(API_KEY, channel_id):
@@ -348,7 +446,7 @@ def get_channel_videos(API_KEY, channel_id):
 
 # Fetch and display comments when button is clicked
 
-if st.sidebar.button("Get Channel Comments") :
+if st.sidebar.button("Show Comments") :
     if len(video_url) == 0 :
        st.sidebar.write('Please input the url and try again')
     elif API_KEY and channel_id:
@@ -377,3 +475,12 @@ if st.sidebar.button("Get Channel Comments") :
             st.error(f"An error occurred: {e}")
     else:
         st.warning("Please provide both API Key and Channel ID.")
+
+if st.sidebar.button('Get comments and channel detail') :
+    if len(video_url) == 0 :
+       st.sidebar.write('Please input the url and try again')
+    else:
+        # Display data in Streamlit
+        st.title("Channel, video id and it's corresponding comments count")
+        data = get_data()
+        st.write(data)

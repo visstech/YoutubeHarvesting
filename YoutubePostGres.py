@@ -7,21 +7,10 @@ import os
 import pandas as pd 
 from streamlit_custom_notification_box import custom_notification_box as scnb
 from sqlalchemy import create_engine
+import isodate
+import logging
+logging.getLogger("streamlit").setLevel(logging.ERROR) # to ignore the warrnings 
 
-#ackground Image
-#st.markdown(
-#    """
-#    <style>
-#    .stApp {
-#        background-image: url('https://static8.depositphotos.com/1000152/1020/i/450/depositphotos_10200176-stock-photo-beach-and-tropical-sea.jpg');
-#        background-size: cover;
-#        background-position: center;
-#        opacity: 0.9;
-#    }
-#    </style>
-#    """,
-#    unsafe_allow_html=True
-#)
 
 # Define the background color CSS
 st.markdown(
@@ -50,13 +39,57 @@ st.markdown(
 )
 
 
+# Inject custom CSS for styling the input label
+st.markdown(
+    """
+    <style>
+    label {
+        font-size: 20px; /* Adjust font size of the label */
+        font-weight: bold; /* Make the label bold (optional) */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Set up YouTube API client
 
 API_KEY = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
 youtube = build('youtube', 'v3', developerKey=API_KEY)
-st.markdown("<h1 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
+#st.markdown("<h1 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style="
+        border: 5px solid #4CAF50; 
+        border-radius: 20px; 
+        padding: 20px; 
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 30px;
+    ">
+        <p><b></b> <h3 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar.</h3></p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 video_url = st.text_input("Enter your Youtube url here") #  
-st.markdown(" ### Enter your Youtube url in the above input box to get detailed information about the youtube channel")
+#st.markdown(" ### Enter your Youtube url in the above input box to get detailed information about the youtube channel")
+
+st.markdown(
+    """
+    <div style="
+        border: 5px solid #4CAF50; 
+        border-radius: 20px; 
+        padding: 20px; 
+        background-color: #f9f9f9;
+        color: #333;
+        font-size: 30px;
+    ">
+        <p><b></b> <h4 style='color:DarkSlateGray'>Enter your Youtube url in the above input box to get detailed information about the youtube channel.</h4></p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 #api_key = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
 
 
@@ -152,8 +185,8 @@ def get_video_comments(API_KEY, video_id):
     # Request to get comments
     request = youtube.commentThreads().list(
         part="snippet",
-        videoId=video_id 
-        #maxResults=100  # Limiting to 10 comments per video for demo; adjust as needed
+        videoId=video_id,
+        maxResults=100  # Limiting to 10 comments per video for demo; adjust as needed
     )
     response = request.execute()
 
@@ -200,7 +233,7 @@ def create_table():
             dislike_count BIGINT,
             favorite_count BIGINT,
             comment_count BIGINT,
-            duration VARCHAR(20),
+            duration BIGINT,
             thumbnail_url TEXT,
             caption_status BOOLEAN
         )
@@ -247,6 +280,49 @@ def get_video_details(video_id):
         id=video_id
     )
     response = request.execute()
+    #Added on 17-NOV-2024
+    channel_response = youtube.channels().list(
+        part="contentDetails",
+        id=channel_id
+    ).execute()
+    
+    uploads_playlist_id = channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+
+    # Step 2: Get video IDs from the uploads playlist
+    video_ids = []
+    next_page_token = None
+
+    while True:
+        playlist_response = youtube.playlistItems().list(
+            part="contentDetails",
+            playlistId=uploads_playlist_id,
+            maxResults=50,
+            pageToken=next_page_token
+        ).execute()
+
+        for item in playlist_response['items']:
+            video_ids.append(item['contentDetails']['videoId'])
+
+        next_page_token = playlist_response.get('nextPageToken')
+        if not next_page_token:
+            break
+
+    # Step 3: Get video durations
+    durations = {}
+    for i in range(0, len(video_ids), 50):
+        video_response = youtube.videos().list(
+            part="contentDetails",
+            id=",".join(video_ids[i:i+50])
+        ).execute()
+
+        for item in video_response['items']:
+            video_id = video_id #item['id']
+            duration_iso = item['contentDetails']['duration']
+            duration_seconds = isodate.parse_duration(duration_iso).total_seconds()
+            durations[video_id] = duration_seconds
+           # st.write(durations[video_id])
+   #End of code added on 17-Nov-2024.
+    
     video = response['items'][0]
     
     details = {
@@ -260,7 +336,7 @@ def get_video_details(video_id):
         "dislike_count": int(video["statistics"].get("dislikeCount", 0)),
         "favorite_count": int(video["statistics"].get("favoriteCount", 0)),
         "comment_count": int(video["statistics"].get("commentCount", 0)),
-        "duration": video["contentDetails"]["duration"],
+        "duration": durations[video_id] ,#video["contentDetails"]["duration"],
         "thumbnail_url": video["snippet"]["thumbnails"]["high"]["url"],
         "caption_status": video["contentDetails"].get("caption", False)
     }
@@ -281,6 +357,7 @@ def insert_video_details(details):
             %(duration)s, %(thumbnail_url)s, %(caption_status)s
         ) ON CONFLICT (video_id) DO NOTHING
     '''
+    st.write('Duriation :',details['duration'])
     cursor.execute(insert_query, details)
     conn.commit()
     cursor.close()
@@ -353,25 +430,107 @@ def AlertBox(wht_msg):
         key="foo")
 
 # Function to connect to PostgreSQL and fetch data
-def get_data():
+def get_data(question_no):
     # Connect to the PostgreSQL database
     engine = onn = create_engine(f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}') #connect_to_db()
     #create_engine(f'postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
     
     # Query to fetch data
-    query = ''' select channel_name,channel_video_id,COUNT(COMMENT_ID) from channel n,comments c
+    query1 = ''' 
+                SELECT title "Video Name ",CHANNEL_NAME "Channel Name" FROM VIDEO,CHANNEL
+                WHERE CHANNEL_video_ID = VIDEO_ID'''
+                
+    query2 = ''' SELECT CHANNEL_NAME,COUNT(playlist_id) AS VIDEO_COUNT
+                    FROM CHANNEL,playlist
+                    WHERE playlist.channel_id = channel.channel_id
+                    GROUP BY CHANNEL_NAME
+                    ORDER BY VIDEO_COUNT DESC
+                    LIMIT 1;
+             '''             
+    query3 = '''  SELECT Title "Video Name", CHANNEL_NAME "Channel", view_count View
+                FROM video,channel
+                WHERE CHANNEL_video_ID = VIDEO_ID
+                ORDER BY view DESC
+                LIMIT 10; 
+            '''    
+    query4 = '''SELECT Title "Video Name", COUNT(comment_id) AS comment_count
+                FROM comments
+                JOIN video ON comments.video_id = video.video_id
+                GROUP BY Title
+                ORDER BY comment_count DESC;
+             '''      
+    query5 = ''' SELECT TITLE "Video Name", channel_name "Channel Name", like_count Likes
+                FROM video,CHANNEL
+                WHERE CHANNEL_video_ID = VIDEO_ID
+                ORDER BY like_count DESC
+                LIMIT 1;
+             '''        
+                        
+    query11 = ''' select channel_name,channel_video_id,COUNT(COMMENT_ID) from channel n,comments c
               where n.channel_video_id = c.video_id
               group by channel_name,channel_video_id ''' # Replace 'your_table_name' with the actual table name
     
+    query6 = '''
+            SELECT title video_name, like_count, dislike_count
+            FROM video'''        
+            
+    query7 = ''' SELECT channel_name, SUM(view_count) AS total_views
+                FROM video ,CHANNEL
+                WHERE CHANNEL_video_ID = VIDEO_ID
+                GROUP BY channel_name;
+             '''        
+    query8 = ''' SELECT DISTINCT channel_name
+            FROM video,channel
+            WHERE CHANNEL_video_ID = VIDEO_ID
+            AND EXTRACT(YEAR FROM video.published_date) = 2024;    
+             '''         
+             
+    query9 = ''' SELECT channel_name , avg(duration) AS avg_duration
+                    FROM video ,CHANNEL
+                    WHERE CHANNEL_video_ID = VIDEO_ID
+                    GROUP BY channel_name
+                    ORDER BY avg_duration DESC;
+             '''         
+    query10  = '''SELECT TITLE video_name, channel_name, COUNT(comment_id) AS comment_count
+                    FROM comments
+                    JOIN video ON comments.video_id = video.video_id
+                    JOIN CHANNEL ON CHANNEL_video_ID = video.VIDEO_ID
+                    GROUP BY video_name, channel_name
+                    ORDER BY comment_count DESC
+                    LIMIT 1;    
+               '''         
+    st.write('Question is:',question) 
+    
     # Fetch data into a DataFrame
-    data = pd.read_sql(query, engine)
+    if question_no == '1' :
+       data = pd.read_sql(query1, engine)
+    elif  question_no == '2' :
+       data = pd.read_sql(query2, engine)
+    elif  question_no == '3' :
+       data = pd.read_sql(query3, engine)
+    elif  question_no == '4' :
+       data = pd.read_sql(query4, engine)
+    elif  question_no == '5' :
+       data = pd.read_sql(query5, engine)
+    elif  question_no == '6' :
+       data = pd.read_sql(query6, engine)
+    elif  question_no == '7' :
+       data = pd.read_sql(query7, engine)       
+    elif  question_no == '8' :
+       data = pd.read_sql(query8, engine)        
+    elif  question_no == '9' :
+       data = pd.read_sql(query9, engine) 
+    elif question_no == '10' :
+       data = pd.read_sql(query10, engine) 
+    else:
+        st.write('Please choose the correct question')      
     return data
 
 
 
 
 # Streamlit UI
-st.title("YouTube Video Details")
+
 
 
 st.markdown("""
@@ -411,6 +570,7 @@ if st.sidebar.button("Save in database") : #and len(video_url) > 0 :
         insert_comments_details(comments_details)
         
         # Display video details
+        st.title("YouTube Video Details")
         st.write("**Title:**", details["title"])
         st.write("**Description:**", details["description"])
         st.write("**Published Date:**", details["published_date"])
@@ -451,12 +611,12 @@ if st.sidebar.button("Show Comments") :
        st.sidebar.write('Please input the url and try again')
     elif API_KEY and channel_id:
         try:
-            st.write("Fetching video IDs from channel...")
+            st.write("Fetching Comments from channel...")
             video_ids = get_channel_videos(API_KEY, channel_id)
             all_comments = []
 
             for video_id in video_ids:
-                st.write(f"Fetching comments for Video ID: {video_id}")
+                #st.write(f"Fetching comments for Video ID: {video_id}")
                 comments = get_video_comments(API_KEY, video_id)
                 all_comments.extend(comments)
 
@@ -476,11 +636,41 @@ if st.sidebar.button("Show Comments") :
     else:
         st.warning("Please provide both API Key and Channel ID.")
 
+# Inject custom CSS to style the selectbox
+st.markdown(
+    """
+    <style>
+    /* Adjust the font size of the selectbox label */
+    div[data-testid="stSelectbox"] > label {
+        font-size: 50px; /* Change this value to your desired font size */
+        font-weight: bold; /* Optional: Add bold style */
+        color: #ff6600; /* Optional: Change the text color */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+        
+question = st.sidebar.selectbox('Select your Question in the below options',("1. Names of all the videos and their corresponding channels",
+                                                                  "2. Channels with the most number of videos and how many they have",
+                                                                  "3. Top 10 most viewed videos and their respective channels",
+                                                                  "4. Number of comments on each video and their corresponding video names",
+                                                                  "5. Videos with the highest number of likes and their corresponding channel names",
+                                                                  "6. Total likes and dislikes for each video and their corresponding video names",
+                                                                  "7. Total number of views for each channel and their corresponding channel names",
+                                                                  "8. Names of all channels that published videos in 2024",
+                                                                  "9. Average duration of all videos in each channel and their corresponding channel names",
+                                                                  "10. Videos with the highest number of comments and their corresponding channel names"))        
+
+# Extract the question number from the selected option
+question_number = question.split(".")[0]  # Splits the string and takes the first part
+question = question.split(".")[1]  # Splits the string and takes the first part
+
 if st.sidebar.button('Get comments and channel detail') :
     if len(video_url) == 0 :
        st.sidebar.write('Please input the url and try again')
     else:
         # Display data in Streamlit
-        st.title("Channel, video id and it's corresponding comments count")
-        data = get_data()
+        #st.title("Channel, video id and it's corresponding comments count")
+        data = get_data(question_number)
         st.write(data)

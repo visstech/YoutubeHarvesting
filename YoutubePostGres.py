@@ -1,3 +1,17 @@
+#Autoher Name : Senthilkumar
+#Created Date :10-Nov-2024
+
+'''
+Problem Statement:
+The problem statement is to create a Streamlit application that allows users to access and analyze data from multiple YouTube channels. 
+The application should have the following features:
+Ability to input a YouTube channel ID and retrieve all the relevant data (Channel name, subscribers, total video count, 
+playlist ID, video ID, likes, dislikes, comments of each video) using Google API.
+Ability to collect data for up to 10 different YouTube channels and store them in the data lake by clicking a button.
+Option to store the data in a MYSQL or PostgreSQL.
+Ability to search and retrieve data from the SQL database using different search options, including joining tables to get channel details.
+'''
+
 import streamlit as st
 from googleapiclient.discovery import build
 import psycopg2
@@ -10,6 +24,8 @@ from sqlalchemy import create_engine
 import isodate
 import logging
 logging.getLogger("streamlit").setLevel(logging.ERROR) # to ignore the warrnings 
+
+
 
 
 # Define the background color CSS
@@ -67,13 +83,13 @@ st.markdown(
         color: #333;
         font-size: 30px;
     ">
-        <p><b></b> <h3 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar.</h3></p>
+        <p><b></b> <h3 style='color:DarkSlateGray'>YouTube Channel Data Analysis Application developed by Vi.S.Senthilkumar.</h3></p>
     </div>
     """,
     unsafe_allow_html=True
 )
 video_url = st.text_input("Enter your Youtube url here") #  
-#st.markdown(" ### Enter your Youtube url in the above input box to get detailed information about the youtube channel")
+
 
 st.markdown(
     """
@@ -138,7 +154,7 @@ def get_channel_details(API_KEY, channel_id):
         channel_data = {
             "Channel ID": channel_info['id'],
             "Channel Name": channel_info['snippet']['title'],
-            "Channel Type": channel_info['kind'],  # General type of resource (usually 'youtube#channel')
+            "Channel Type": channel_info['kind'],   
             "Channel Views": channel_info['statistics']['viewCount'],
             "Channel Description": channel_info['snippet']['description'],
             "Channel Status": channel_info['status']['privacyStatus'],
@@ -158,7 +174,7 @@ def get_channel_playlists(API_KEY, channel_id):
     request = youtube.playlists().list(
         part='snippet',
         channelId=channel_id,
-        maxResults=50  # Adjust as needed, max 50 at a time
+        maxResults=50  # max 50 at a time
     )
     response = request.execute()
     
@@ -186,7 +202,7 @@ def get_video_comments(API_KEY, video_id):
     request = youtube.commentThreads().list(
         part="snippet",
         videoId=video_id,
-        maxResults=100  # Limiting to 10 comments per video for demo; adjust as needed
+        maxResults=100  # Limiting video comments as needed
     )
     response = request.execute()
 
@@ -202,11 +218,81 @@ def get_video_comments(API_KEY, video_id):
         })
     return comments
 
+# Function to get video details from YouTube API
+def get_video_details(video_id):
+    request = youtube.videos().list(
+        part="snippet,statistics,contentDetails",
+        id=video_id
+    )
+    response = request.execute()
+    #Added on 17-NOV-2024
+    channel_response = youtube.channels().list(
+        part="contentDetails",
+        id=channel_id
+    ).execute()
+    
+    uploads_playlist_id = channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+
+    # Step 2: Get video IDs from the uploads playlist
+    video_ids = []
+    next_page_token = None
+
+    while True:
+        playlist_response = youtube.playlistItems().list(
+            part="contentDetails",
+            playlistId=uploads_playlist_id,
+            maxResults=50,
+            pageToken=next_page_token
+        ).execute()
+
+        for item in playlist_response['items']:
+            video_ids.append(item['contentDetails']['videoId'])
+
+        next_page_token = playlist_response.get('nextPageToken')
+        if not next_page_token:
+            break
+
+    # Step 3: Get video durations
+    durations = {}
+    for i in range(0, len(video_ids), 50):
+        video_response = youtube.videos().list(
+            part="contentDetails",
+            id=",".join(video_ids[i:i+50])
+        ).execute()
+
+        for item in video_response['items']:
+            video_id = video_id #item['id']
+            duration_iso = item['contentDetails']['duration']
+            duration_seconds = isodate.parse_duration(duration_iso).total_seconds()
+            durations[video_id] = duration_seconds
+           # st.write(durations[video_id])
+   #End of code added on 17-Nov-2024.
+    
+    video = response['items'][0]
+    
+    details = {
+        "video_id": video_id,
+        "playlist_id": None,   
+        "title": video["snippet"]["title"],
+        "description": video["snippet"]["description"],
+        "published_date": datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"),
+        "view_count": int(video["statistics"].get("viewCount", 0)),
+        "like_count": int(video["statistics"].get("likeCount", 0)),
+        "dislike_count": int(video["statistics"].get("dislikeCount", 0)),
+        "favorite_count": int(video["statistics"].get("favoriteCount", 0)),
+        "comment_count": int(video["statistics"].get("commentCount", 0)),
+        "duration": durations[video_id] ,#video["contentDetails"]["duration"],
+        "thumbnail_url": video["snippet"]["thumbnails"]["high"]["url"],
+        "caption_status": video["contentDetails"].get("caption", False)
+    }
+    return details
+
+
 
 # PostgreSQL connection details
-DB_NAME = 'postgres' #'your_database_name'
-DB_USER = 'postgres' #'your_username'
-DB_PASSWORD = 'PostViss' #'your_password'
+DB_NAME = 'postgres' #' database_name'
+DB_USER = 'postgres' #'username'
+DB_PASSWORD = 'PostViss' #'password'
 DB_HOST = 'localhost'
 DB_PORT = '5432'
 
@@ -272,75 +358,6 @@ def create_table():
     conn.commit()
     cursor.close()
     conn.close()
-
-# Function to get video details from YouTube API
-def get_video_details(video_id):
-    request = youtube.videos().list(
-        part="snippet,statistics,contentDetails",
-        id=video_id
-    )
-    response = request.execute()
-    #Added on 17-NOV-2024
-    channel_response = youtube.channels().list(
-        part="contentDetails",
-        id=channel_id
-    ).execute()
-    
-    uploads_playlist_id = channel_response['items'][0]['contentDetails']['relatedPlaylists']['uploads']
-
-    # Step 2: Get video IDs from the uploads playlist
-    video_ids = []
-    next_page_token = None
-
-    while True:
-        playlist_response = youtube.playlistItems().list(
-            part="contentDetails",
-            playlistId=uploads_playlist_id,
-            maxResults=50,
-            pageToken=next_page_token
-        ).execute()
-
-        for item in playlist_response['items']:
-            video_ids.append(item['contentDetails']['videoId'])
-
-        next_page_token = playlist_response.get('nextPageToken')
-        if not next_page_token:
-            break
-
-    # Step 3: Get video durations
-    durations = {}
-    for i in range(0, len(video_ids), 50):
-        video_response = youtube.videos().list(
-            part="contentDetails",
-            id=",".join(video_ids[i:i+50])
-        ).execute()
-
-        for item in video_response['items']:
-            video_id = video_id #item['id']
-            duration_iso = item['contentDetails']['duration']
-            duration_seconds = isodate.parse_duration(duration_iso).total_seconds()
-            durations[video_id] = duration_seconds
-           # st.write(durations[video_id])
-   #End of code added on 17-Nov-2024.
-    
-    video = response['items'][0]
-    
-    details = {
-        "video_id": video_id,
-        "playlist_id": None,  # Update if you want to include playlist data
-        "title": video["snippet"]["title"],
-        "description": video["snippet"]["description"],
-        "published_date": datetime.strptime(video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"),
-        "view_count": int(video["statistics"].get("viewCount", 0)),
-        "like_count": int(video["statistics"].get("likeCount", 0)),
-        "dislike_count": int(video["statistics"].get("dislikeCount", 0)),
-        "favorite_count": int(video["statistics"].get("favoriteCount", 0)),
-        "comment_count": int(video["statistics"].get("commentCount", 0)),
-        "duration": durations[video_id] ,#video["contentDetails"]["duration"],
-        "thumbnail_url": video["snippet"]["thumbnails"]["high"]["url"],
-        "caption_status": video["contentDetails"].get("caption", False)
-    }
-    return details
 
 # Function to insert data into PostgreSQL
 def insert_video_details(details):
@@ -468,7 +485,7 @@ def get_data(question_no):
                         
     query11 = ''' select channel_name,channel_video_id,COUNT(COMMENT_ID) from channel n,comments c
               where n.channel_video_id = c.video_id
-              group by channel_name,channel_video_id ''' # Replace 'your_table_name' with the actual table name
+              group by channel_name,channel_video_id ''' 
     
     query6 = '''
             SELECT title video_name, like_count, dislike_count
@@ -551,7 +568,7 @@ st.markdown("""
 
 #video_id = st.text_input("Enter YouTube Video ID:")
 
-if st.sidebar.button("Save in database") : #and len(video_url) > 0 :
+if st.sidebar.button("Save to Database") : #and len(video_url) > 0 :
     if len(video_url) == 0 :
         st.warning("Please enter URL to get youtube vido deatils to store in the database")
     elif video_id and channel_id:
@@ -662,15 +679,13 @@ question = st.sidebar.selectbox('Select your Question in the below options',("1.
                                                                   "9. Average duration of all videos in each channel and their corresponding channel names",
                                                                   "10. Videos with the highest number of comments and their corresponding channel names"))        
 
-# Extract the question number from the selected option
-question_number = question.split(".")[0]  # Splits the string and takes the first part
-question = question.split(".")[1]  # Splits the string and takes the first part
 
-if st.sidebar.button('Get comments and channel detail') :
+question_number = question.split(".")[0]  # Splits the string and takes the first part
+question = question.split(".")[1]  # Splits the string and takes the second part
+
+if st.sidebar.button('Fetch data') :
     if len(video_url) == 0 :
        st.sidebar.write('Please input the url and try again')
     else:
-        # Display data in Streamlit
-        #st.title("Channel, video id and it's corresponding comments count")
         data = get_data(question_number)
         st.write(data)

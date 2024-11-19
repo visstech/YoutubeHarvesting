@@ -25,7 +25,7 @@ Options to filter results by specific criteria such as video likes, comments, et
 3. Architecture
 
 3.1 System Flow
-User inputs a YouTube Channel ID.
+User inputs a YouTube Channel URL.
 Application retrieves data via the Google YouTube Data API.
 
 Data is stored:
@@ -59,12 +59,12 @@ google-auth: To authenticate with the Google YouTube Data API.
 
 5. Key Functional Components
 5.1 Input Module
-Accepts YouTube Channel IDs.
+Accepts YouTube Channel URL.
 Validates the input format.
 
 5.2 API Integration Module
 Connects to the Google YouTube Data API.
-Fetches channel and video data based on the Channel ID.
+Fetches channel and video data based on the Channel ID for the given YouTube URL.
 Handles API errors and retries for robustness.
 
 5.3 Data Storage Module
@@ -108,7 +108,7 @@ streamlit run app.py
 
 7. Usage Instructions
 Launch the application using the terminal command.
-Enter a YouTube Channel ID in the provided input box.
+Enter a YouTube Channel URL in the provided input box.
 Click "Fetch Data" to retrieve channel and video information.
 Click "Save to Database" to store data in MySQL/PostgreSQL.
 Use the Search tab to query the stored data using filters or SQL commands.
@@ -125,7 +125,7 @@ One-to-Many: A channel can have multiple videos.
 
 9. Error Handling
 API Error: Display user-friendly error messages and retry options.
-Input Validation: Ensure correct format for YouTube Channel IDs.
+Input Validation: Ensure correct format for YouTube Channel URLs.
 Database Errors: Catch exceptions and provide suggestions for resolution.
 
 10. Future Enhancements

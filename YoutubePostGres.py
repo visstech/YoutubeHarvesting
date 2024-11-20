@@ -74,7 +74,7 @@ st.markdown(
 
 # Set up YouTube API client
 
-API_KEY = 'AIzaSyCIz8mGnDFN2aurj65cKNoCwnrQ1d-t5gY'
+API_KEY = st.secrets["google"]["api_key"]
 youtube = build('youtube', 'v3', developerKey=API_KEY)
 #st.markdown("<h1 style='color:DarkSlateGray'>Youtube Harvesting Application developed by Vi.S.Senthilkumar </h1>", unsafe_allow_html=True)
 st.markdown(

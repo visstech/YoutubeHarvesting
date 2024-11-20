@@ -1,0 +1,8 @@
+# Ignore secrets
+.streamlit/secrets.toml
+
+# Python-related ignores
+__pycache__/
+*.py[cod]
+*.pyo
+*.env

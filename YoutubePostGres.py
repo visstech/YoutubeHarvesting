@@ -24,6 +24,10 @@ from sqlalchemy import create_engine
 import isodate
 import logging
 logging.getLogger("streamlit").setLevel(logging.ERROR) # to ignore the warrnings 
+import matplotlib.pyplot as plt 
+import plotly.graph_objects as go
+
+import plotly.express as px
 
 
 
@@ -525,6 +529,7 @@ def get_data(question_no):
        data = pd.read_sql(query2, engine)
     elif  question_no == '3' :
        data = pd.read_sql(query3, engine)
+       
     elif  question_no == '4' :
        data = pd.read_sql(query4, engine)
     elif  question_no == '5' :
@@ -688,4 +693,163 @@ if st.sidebar.button('Fetch data') :
        st.sidebar.write('Please input the url and try again')
     else:
         data = get_data(question_number)
-        st.write(data)
+        if question_number == '3' :
+            #styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            
+            
+
+            st.table(styled_df)
+          
+            plt.tight_layout()
+
+            # Display in Streamlit
+            #st.pyplot()
+            st.write("### Views by Channel")
+            fig = px.bar(
+                data,
+                x="view",
+                y="Channel",
+                color="Channel",
+                orientation='h',
+                text="view",
+                title="Video Views by Channel",
+                labels={"Views": "View Count", "Channel": "YouTube Channel"}
+            )
+            fig.update_layout(
+                xaxis=dict(title="Views"),
+                yaxis=dict(title="Channel Name"),
+                height=600,
+                showlegend=False
+            )
+            st.plotly_chart(fig)
+            
+            st.write("### Line Graph of Views by Channel")
+            fig_line = px.line(
+                data,
+                x="Channel",
+                y="view",
+                text="view",
+                title="Line Graph of Views by Channel",
+                labels={"Views": "View Count", "Channel": "YouTube Channel"}
+            )
+            fig_line.update_traces(textposition="top center")
+            fig_line.update_layout(
+                xaxis=dict(title="Channel"),
+                yaxis=dict(title="Views"),
+                height=600
+            )
+            st.plotly_chart(fig_line)
+        elif question_number == '6' :
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            st.table(styled_df)
+            # Pie Chart
+            st.subheader("Pie Chart of Like Counts")
+            pie_chart = px.pie(
+                data,
+                values="like_count",
+                names="video_name",
+                title="Proportion of Like Counts by Video",
+            )
+            st.plotly_chart(pie_chart)
+            # Line Chart
+            st.subheader("Line Chart of Like Counts")
+            line_chart = px.line(
+                data,
+                x="video_name",
+                y="like_count",
+                title="Trend of Like Counts Across Videos",
+                labels={"like_count": "Likes", "video_name": "Video"},
+                markers=True,
+            )
+            line_chart.update_layout(xaxis_tickangle=45)  # Rotate x-axis labels
+            st.plotly_chart(line_chart)
+        elif question_number == '7' :
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            st.table(styled_df)
+            # Streamlit App
+            st.title("YouTube Channel Total Views")
+            
+           # Horizontal Bar Chart
+            
+            horizontal_bar_chart = px.bar(
+                data,
+                x="total_views",
+                y="channel_name",
+                orientation="h",
+                title="Total Views for Each Channel (Horizontal)",
+                labels={"total_views": "Total Views", "channel_name": "Channel"},
+                text="total_views",
+            )
+            horizontal_bar_chart.update_traces(textposition="outside")
+            st.plotly_chart(horizontal_bar_chart) 
+            # Pie Chart
+            st.subheader("Pie Chart of Total Views")
+            pie_chart = px.pie(
+                data,
+                values="total_views",
+                names="channel_name",
+                title="Proportion of Total Views by Channel",
+            )
+            st.plotly_chart(pie_chart)
+        elif question_number == '4' :
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            st.table(styled_df)
+            st.title("Comment Count Visualization")
+
+            # Bar Chart
+            
+            bar_chart = px.bar(
+                data,
+                x="Video Name",
+                y="comment_count",
+                title="Comment Count for Each Video",
+                labels={"comment_count": "Comments", "Video Name": "Video"},
+                text="comment_count",
+            )
+            bar_chart.update_traces(textposition="outside")
+            st.plotly_chart(bar_chart)  
+            # Pie Chart
+            st.subheader("Pie Chart of Comment Counts")
+            pie_chart = px.pie(
+                data,
+                values="comment_count",
+                names="Video Name",
+                title="Proportion of Comment Counts by Video",
+            )
+            st.plotly_chart(pie_chart) 
+        elif question_number == '9' :
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            st.table(styled_df)
+            # Horizontal Bar Chart
+            st.subheader("Horizontal Bar Chart of Average Duration")
+            horizontal_bar_chart = px.bar(
+                data,
+                x="avg_duration",
+                y="channel_name",
+                orientation="h",
+                title="Average Video Duration for Each Channel (Horizontal)",
+                labels={"avg_duration": "Average Duration (seconds)", "channel_name": "Channel"},
+                text="avg_duration",
+            )
+            horizontal_bar_chart.update_traces(textposition="outside")
+            st.plotly_chart(horizontal_bar_chart)
+
+            # Pie Chart
+            st.subheader("Pie Chart of Average Duration")
+            pie_chart = px.pie(
+                data,
+                values="avg_duration",
+                names="channel_name",
+                title="Proportion of Average Video Duration by Channel",
+            )
+            st.plotly_chart(pie_chart)
+                 
+        else :
+            styled_df = data.style.background_gradient(cmap='coolwarm')
+            styled_df = data.style.highlight_max(color='lightgreen', axis=0).highlight_min(color='lightcoral', axis=0)
+            st.table(styled_df)

@@ -2,7 +2,7 @@
 
 A Streamlit-based data engineering and analytics application that extracts, stores, and analyzes YouTube channel data using the YouTube Data API v3, PostgreSQL, and interactive visualizations.
 
-🚀 Project Overview
+🚀 Project Overview 
 
 This application allows users to:
 

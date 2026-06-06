@@ -1,135 +1,99 @@
-📊 YouTube Channel Data Analysis App
+🎬 YouTube Data Analytics Dashboard
 
-A Streamlit-based data engineering and analytics application that extracts, stores, and analyzes YouTube channel data using the YouTube Data API v3, PostgreSQL, and interactive visualizations.
+🚀 A powerful Streamlit-based analytics platform to extract, store, and visualize YouTube channel data using YouTube Data API v3 + PostgreSQL.
 
-🚀 Project Overview 
+🌟 Live Capabilities
 
-This application allows users to:
+✔ Extract YouTube channel & video data using URL
+✔ Store up to 10 channels in PostgreSQL
+✔ Perform SQL-based analytics queries
+✔ Interactive dashboards with Plotly charts
+✔ View video comments & engagement metrics
+✔ Real-time data exploration interface
 
-Fetch YouTube channel and video data using a video URL
-Collect data for multiple channels (up to 10)
-Store data in a PostgreSQL database
-Perform SQL-based analytics queries
-Visualize insights using Plotly charts
-View comments from videos and channels
-🎯 Features
-🔹 Data Extraction (YouTube API)
-Channel details (name, views, description, subscribers, status)
-Video details (title, views, likes, comments, duration, etc.)
-Playlist details
-Comments from videos
-Channel-level video list
-🔹 Data Storage (PostgreSQL)
+📸 Dashboard Preview
 
-Automatically creates and manages tables:
+(Add screenshot here for better GitHub attraction)
 
+![App Screenshot](assets/dashboard.png)
+🧰 Tech Stack
+Technology	Purpose
+Streamlit	Web UI
+Python	Backend Logic
+YouTube API v3	Data Extraction
+PostgreSQL	Data Storage
+SQLAlchemy	DB Connection
+Plotly	Data Visualization
+Pandas	Data Processing
+📊 Key Analytics Features
+🔹 Channel Insights
+Channel name, views, description
+Total videos & playlists
+Channel-level statistics
+🔹 Video Insights
+Views, likes, dislikes, comments
+Video duration analysis
+Engagement metrics
+🔹 Comment Analytics
+Top commented videos
+Comment author tracking
+Engagement comparison
+📈 Visual Dashboards
+📊 Popular Visualizations
+📌 Top 10 Most Viewed Videos
+📌 Channel-wise Total Views
+📌 Like vs Dislike Comparison
+📌 Comment Distribution
+📌 Average Video Duration Analysis
+🗄️ Database Schema
+📦 Tables Created
 video
 channel
 playlist
 comments
-
-Supports:
-
-Insert with ON CONFLICT handling
-Relational mapping between tables
-🔹 Data Analysis (SQL Queries)
-
-Predefined analytical questions:
-
-Video names with channel names
-Channel with most videos
-Top 10 most viewed videos
-Comment counts per video
-Most liked videos
-Likes vs dislikes per video
-Total views per channel
-Channels with videos in 2024
-Average video duration per channel
-Most commented videos
-🔹 Visualization (Plotly + Streamlit)
-Bar charts (horizontal & vertical)
-Line charts
-Pie charts
-Styled tables with gradients
-🛠️ Tech Stack
-Python 3.x
-Streamlit (UI framework)
-Google YouTube Data API v3
-PostgreSQL
-SQLAlchemy
-Pandas
-Plotly & Matplotlib
-isodate
-📂 Project Structure
-youtube-data-analysis/
-│
-├── app.py                  # Main Streamlit application
-├── requirements.txt        # Dependencies
-├── README.md               # Project documentation
-└── .streamlit/
-    └── secrets.toml       # API keys (not pushed to GitHub)
-⚙️ Setup Instructions
-1️⃣ Clone the Repository
-git clone https://github.com/your-username/youtube-data-analysis.git
-cd youtube-data-analysis
+⚙️ Installation Guide
+1️⃣ Clone Repository
+git clone https://github.com/your-username/youtube-analytics.git
+cd youtube-analytics
 2️⃣ Install Dependencies
 pip install -r requirements.txt
-3️⃣ Configure API Key
+3️⃣ Add API Key
 
-Create .streamlit/secrets.toml:
+Create .streamlit/secrets.toml
 
 [google]
 api_key = "YOUR_YOUTUBE_API_KEY"
-4️⃣ Setup PostgreSQL Database
-
-Update credentials in the code:
-
-DB_NAME = 'postgres'
-DB_USER = 'postgres'
-DB_PASSWORD = 'your_password'
-DB_HOST = 'localhost'
-DB_PORT = '5432'
-5️⃣ Run the Application
+4️⃣ Configure Database
+DB_NAME = "postgres"
+DB_USER = "postgres"
+DB_PASSWORD = "your_password"
+DB_HOST = "localhost"
+DB_PORT = "5432"
+5️⃣ Run App
 streamlit run app.py
-📊 How It Works
-Step 1:
+📊 Sample UI Flow
+1️⃣ Enter YouTube URL
+2️⃣ Click "Save to Database"
+3️⃣ Data is stored in PostgreSQL
+4️⃣ Select analytics question
+5️⃣ View charts + insights
+🚀 Future Enhancements
 
-Enter a YouTube video URL
+✨ AI-based video performance prediction
+✨ Multi-channel comparison dashboard
+✨ Export reports (PDF/Excel)
+✨ Login authentication system
+✨ Cloud deployment (Streamlit Cloud / AWS)
 
-Step 2:
-
-Click Save to Database
-
-Fetches data from YouTube API
-Stores in PostgreSQL
-Step 3:
-
-Use sidebar options:
-
-Fetch analytical results
-View charts
-Analyze channel performance
-📈 Sample Visualizations
-Top Viewed Videos
-Likes Distribution
-Channel-wise Views
-Comment Analysis
-Video Duration Insights
-🔐 Security Notes
-Never expose your API key in GitHub
-Use Streamlit secrets for credentials
-Secure PostgreSQL access
-📌 Future Improvements
-MongoDB integration (NoSQL support)
-Dashboard authentication system
-Real-time YouTube updates
-Export analytics to CSV/PDF
-Machine Learning-based video trend prediction
-👨‍💻 Author
+👨‍💻 Developer
 
 Senthilkumar
 📅 Created: 10-Nov-2024
 
-⭐ If you like this project
+⭐ Support
 
-Give it a ⭐ on GitHub and share it!
+If you like this project:
+
+⭐ Star the repository
+🍴 Fork it
+🔔 Share with others

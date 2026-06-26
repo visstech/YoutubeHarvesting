@@ -1,5 +1,13 @@
 
 
+## 🏗️ System Architecture
+
+The platform follows a modern ETL (Extract → Transform → Load) pipeline to collect, process, store, analyze, and visualize YouTube channel data.
+
+<p align="center">
+  <img src="assets/architecture.png" alt="YouTube Data Analytics Platform Architecture" width="1000">
+</p>
+
 <img width="942" height="620" alt="image" src="https://github.com/user-attachments/assets/f6824b28-51b1-4ccd-bcb0-8dbe621be416" />
 
 

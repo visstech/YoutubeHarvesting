@@ -1,3 +1,10 @@
+
+
+<img width="942" height="620" alt="image" src="https://github.com/user-attachments/assets/f6824b28-51b1-4ccd-bcb0-8dbe621be416" />
+
+
+
+
 🚀 YouTube Data Analytics Platform
 A scalable data engineering and analytics platform that extracts, stores, and visualizes YouTube channel insights using YouTube Data API v3, PostgreSQL, and Streamlit.
 ________________________________________

@@ -19,6 +19,27 @@ The application follows a layered architecture:
 - 🗄️ **Database Layer** – Stores normalized data in PostgreSQL with relational tables.
 - 📊 **Analytics Layer** – Executes SQL queries to generate business insights and KPIs.
 - 📈 **Visualization Layer** – Displays interactive dashboards using Streamlit and Plotly.
+
+- YouTube URL
+     │
+     ▼
+YouTube Data API v3
+     │
+     ▼
+Python ETL Pipeline
+     │
+     ▼
+Data Cleaning & Transformation
+     │
+     ▼
+PostgreSQL Database
+     │
+     ▼
+SQL Analytics
+     │
+     ▼
+Interactive Streamlit Dashboard
+
 - 
 🚀 YouTube Data Analytics Platform
 A scalable data engineering and analytics platform that extracts, stores, and visualizes YouTube channel insights using YouTube Data API v3, PostgreSQL, and Streamlit.

@@ -186,6 +186,9 @@ ________________________________________
 •	📤 Export analytics to PDF/Excel 
 •	📡 Real-time YouTube streaming updates 
 ________________________________________
+
+<img width="1410" height="652" alt="image" src="https://github.com/user-attachments/assets/1cc0d51c-85e0-46f2-9f42-8021f24d6c61" />
+
 👨‍💻 Author : Senthilkumar
 📅 Created: Nov 2024
 💼 Role: Software Engineer | Data & AI Enthusiast

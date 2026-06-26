@@ -10,7 +10,16 @@ The platform follows a modern ETL (Extract → Transform → Load) pipeline to c
 
 
 
+### Architecture Overview
 
+The application follows a layered architecture:
+
+- 📥 **Data Extraction Layer** – Fetches channel, video, playlist, and comment data from the YouTube Data API v3.
+- 🔄 **Processing Layer** – Cleans, transforms, and structures JSON responses using Pandas.
+- 🗄️ **Database Layer** – Stores normalized data in PostgreSQL with relational tables.
+- 📊 **Analytics Layer** – Executes SQL queries to generate business insights and KPIs.
+- 📈 **Visualization Layer** – Displays interactive dashboards using Streamlit and Plotly.
+- 
 🚀 YouTube Data Analytics Platform
 A scalable data engineering and analytics platform that extracts, stores, and visualizes YouTube channel insights using YouTube Data API v3, PostgreSQL, and Streamlit.
 ________________________________________
